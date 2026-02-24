@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { useSessionStore } from "../store/sessionStore";
@@ -12,12 +12,71 @@ export function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
   const groqKey = useSessionStore((s) => s.groqKey);
+
+  // Load most recent session and its messages on mount
+  useEffect(() => {
+    const load = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: sessions } = await supabase
+        .from("chat_sessions")
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (!sessions || sessions.length === 0) return;
+
+      const sid = sessions[0].id;
+      sessionIdRef.current = sid;
+
+      const { data: msgs } = await supabase
+        .from("chat_messages")
+        .select("id, role, content, created_at")
+        .eq("session_id", sid)
+        .order("created_at", { ascending: true });
+
+      if (msgs) {
+        setMessages(
+          msgs.map((m) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+            created_at: m.created_at,
+          }))
+        );
+      }
+    };
+    load();
+  }, []);
+
+  const getOrCreateSession = async (userId: string): Promise<string> => {
+    if (sessionIdRef.current) return sessionIdRef.current;
+
+    const { data } = await supabase
+      .from("chat_sessions")
+      .insert({ user_id: userId, title: "Chat " + new Date().toLocaleDateString() })
+      .select("id")
+      .single();
+
+    const sid = data!.id;
+    sessionIdRef.current = sid;
+    return sid;
+  };
 
   const sendMessage = useCallback(
     async (question: string) => {
       if (streaming) return;
       setError(null);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const userId = sessionData.session?.user.id;
+      if (!token || !userId) return;
+
+      const sid = await getOrCreateSession(userId);
 
       const userMsg: Message = {
         id: makeId(),
@@ -25,7 +84,6 @@ export function useChat() {
         content: question,
         created_at: new Date().toISOString(),
       };
-
       const assistantId = makeId();
       const assistantMsg: Message = {
         id: assistantId,
@@ -37,18 +95,33 @@ export function useChat() {
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
       setStreaming(true);
 
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-        if (!token) throw new Error("Not authenticated");
+      // Persist user message
+      await supabase.from("chat_messages").insert({
+        id: userMsg.id,
+        session_id: sid,
+        user_id: userId,
+        role: "user",
+        content: question,
+      });
 
-        for await (const token_chunk of streamChat(question, token, groqKey)) {
+      let fullResponse = "";
+      try {
+        for await (const chunk of streamChat(question, token, groqKey)) {
+          fullResponse += chunk;
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId ? { ...m, content: m.content + token_chunk } : m
+              m.id === assistantId ? { ...m, content: m.content + chunk } : m
             )
           );
         }
+        // Persist assistant message
+        await supabase.from("chat_messages").insert({
+          id: assistantId,
+          session_id: sid,
+          user_id: userId,
+          role: "assistant",
+          content: fullResponse,
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Chat failed");
         setMessages((prev) =>
@@ -65,7 +138,11 @@ export function useChat() {
     [streaming, groqKey]
   );
 
-  const clearMessages = useCallback(() => setMessages([]), []);
+  const newSession = useCallback(() => {
+    sessionIdRef.current = null;
+    setMessages([]);
+    setError(null);
+  }, []);
 
-  return { messages, streaming, error, sendMessage, clearMessages };
+  return { messages, streaming, error, sendMessage, newSession };
 }
