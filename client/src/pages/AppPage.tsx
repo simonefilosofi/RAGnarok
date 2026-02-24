@@ -12,7 +12,7 @@ interface AppPageProps {
 }
 
 export function AppPage({ user, onSignOut }: AppPageProps) {
-  const { messages, streaming, sendMessage, newSession, sessions, activeSessionId, loadSession } = useChat();
+  const { messages, streaming, sendMessage, newSession, deleteSession, sessions, activeSessionId, loadSession } = useChat();
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -24,6 +24,7 @@ export function AppPage({ user, onSignOut }: AppPageProps) {
           activeSessionId={activeSessionId}
           onSelectSession={loadSession}
           onNewChat={newSession}
+          onDeleteSession={deleteSession}
         />
         <main className="flex flex-col flex-1 overflow-hidden">
           <ChatWindow messages={messages} streaming={streaming} />

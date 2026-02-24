@@ -12,10 +12,11 @@ interface SidebarProps {
   activeSessionId: string | null;
   onSelectSession: (id: string) => void;
   onNewChat: () => void;
+  onDeleteSession: (id: string) => void;
 }
 
 
-export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat }: SidebarProps) {
+export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat, onDeleteSession }: SidebarProps) {
   const { documents, remove } = useDocuments();
   const { groqKey, setGroqKey, clearGroqKey } = useSessionStore();
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -54,17 +55,25 @@ export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat 
               {sessions.map((s) => {
                 const isActive = s.id === activeSessionId;
                 return (
-                  <li key={s.id}>
+                  <li key={s.id} className="group relative">
                     <button
                       type="button"
                       onClick={() => onSelectSession(s.id)}
-                      className={`w-full text-left px-2 py-2 rounded-md text-sm transition-colors ${
+                      className={`w-full text-left px-2 py-2 pr-7 rounded-md text-sm transition-colors ${
                         isActive
                           ? "bg-brand-100 text-brand-700 font-medium"
                           : "text-gray-700 hover:bg-gray-200"
                       }`}
                     >
                       <span className="block truncate">{s.title}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onDeleteSession(s.id); }}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity"
+                      aria-label="Delete chat"
+                    >
+                      ×
                     </button>
                   </li>
                 );

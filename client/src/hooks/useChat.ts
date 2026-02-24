@@ -195,5 +195,16 @@ export function useChat() {
     setError(null);
   }, []);
 
-  return { messages, streaming, error, sendMessage, newSession, sessions, activeSessionId, loadSession };
+  const deleteSession = useCallback(async (id: string) => {
+    await supabase.from("chat_sessions").delete().eq("id", id);
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+    if (sessionIdRef.current === id) {
+      sessionIdRef.current = null;
+      setActiveSessionId(null);
+      setMessages([]);
+      setError(null);
+    }
+  }, []);
+
+  return { messages, streaming, error, sendMessage, newSession, deleteSession, sessions, activeSessionId, loadSession };
 }
