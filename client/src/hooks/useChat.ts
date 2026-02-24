@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { useSessionStore } from "../store/sessionStore";
-import type { Message } from "../types";
+import type { ChatSession, Message } from "../types";
 
 function makeId() {
   return crypto.randomUUID();
@@ -12,25 +12,29 @@ export function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const groqKey = useSessionStore((s) => s.groqKey);
 
-  // Load most recent session and its messages on mount
+  // Load all sessions and most recent session's messages on mount
   useEffect(() => {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: sessions } = await supabase
+      const { data: allSessions } = await supabase
         .from("chat_sessions")
-        .select("id")
-        .order("created_at", { ascending: false })
-        .limit(1);
+        .select("id, title, created_at")
+        .order("created_at", { ascending: false });
 
-      if (!sessions || sessions.length === 0) return;
+      if (!allSessions || allSessions.length === 0) return;
 
-      const sid = sessions[0].id;
+      setSessions(allSessions as ChatSession[]);
+
+      const sid = allSessions[0].id;
       sessionIdRef.current = sid;
+      setActiveSessionId(sid);
 
       const { data: msgs } = await supabase
         .from("chat_messages")
@@ -58,13 +62,44 @@ export function useChat() {
     const { data } = await supabase
       .from("chat_sessions")
       .insert({ user_id: userId, title: "Chat " + new Date().toLocaleDateString() })
-      .select("id")
+      .select("id, title, created_at")
       .single();
 
-    const sid = data!.id;
-    sessionIdRef.current = sid;
-    return sid;
+    const newSession: ChatSession = {
+      id: data!.id,
+      title: data!.title,
+      created_at: data!.created_at,
+    };
+    setSessions((prev) => [newSession, ...prev]);
+    sessionIdRef.current = newSession.id;
+    setActiveSessionId(newSession.id);
+    return newSession.id;
   };
+
+  const loadSession = useCallback(async (id: string) => {
+    if (id === sessionIdRef.current) return;
+    sessionIdRef.current = id;
+    setActiveSessionId(id);
+    setMessages([]);
+    setError(null);
+
+    const { data: msgs } = await supabase
+      .from("chat_messages")
+      .select("id, role, content, created_at")
+      .eq("session_id", id)
+      .order("created_at", { ascending: true });
+
+    if (msgs) {
+      setMessages(
+        msgs.map((m) => ({
+          id: m.id,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+          created_at: m.created_at,
+        }))
+      );
+    }
+  }, []);
 
   const sendMessage = useCallback(
     async (question: string) => {
@@ -140,9 +175,10 @@ export function useChat() {
 
   const newSession = useCallback(() => {
     sessionIdRef.current = null;
+    setActiveSessionId(null);
     setMessages([]);
     setError(null);
   }, []);
 
-  return { messages, streaming, error, sendMessage, newSession };
+  return { messages, streaming, error, sendMessage, newSession, sessions, activeSessionId, loadSession };
 }

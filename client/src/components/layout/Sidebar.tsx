@@ -1,12 +1,30 @@
 import { useState } from "react";
 import { useDocuments } from "../../hooks/useDocuments";
 import { useSessionStore } from "../../store/sessionStore";
+import type { ChatSession } from "../../types";
 import { DocumentList } from "../documents/DocumentList";
 import { UploadModal } from "../documents/UploadModal";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 
-export function Sidebar() {
+interface SidebarProps {
+  sessions: ChatSession[];
+  activeSessionId: string | null;
+  onSelectSession: (id: string) => void;
+  onNewChat: () => void;
+}
+
+function formatSessionDate(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat }: SidebarProps) {
   const { documents, remove } = useDocuments();
   const { groqKey, setGroqKey, clearGroqKey } = useSessionStore();
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -27,17 +45,61 @@ export function Sidebar() {
 
   return (
     <aside className="w-72 border-r border-gray-200 bg-gray-50 flex flex-col h-full shrink-0">
-      {/* Documents section */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Documents
-          </h2>
-          <Button size="sm" variant="secondary" onClick={() => setUploadOpen(true)}>
-            + Add
-          </Button>
+      <div className="flex-1 overflow-y-auto">
+        {/* Chats section */}
+        <div className="p-4 pb-2">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              Chats
+            </h2>
+            <Button size="sm" variant="secondary" onClick={onNewChat}>
+              + New
+            </Button>
+          </div>
+          {sessions.length === 0 ? (
+            <p className="text-xs text-gray-400 py-2">No conversations yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-0.5">
+              {sessions.map((s) => {
+                const isActive = s.id === activeSessionId;
+                return (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectSession(s.id)}
+                      className={`w-full text-left px-2 py-2 rounded-md text-sm transition-colors ${
+                        isActive
+                          ? "bg-brand-100 text-brand-700 font-medium"
+                          : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      <span className="block truncate">{s.title}</span>
+                      <span className="block text-xs text-gray-400 mt-0.5">
+                        {formatSessionDate(s.created_at)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-        <DocumentList documents={documents} onDelete={remove} />
+
+        {/* Divider */}
+        <div className="border-t border-gray-200 mx-4 my-1" />
+
+        {/* Documents section */}
+        <div className="p-4 pt-3">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              Documents
+            </h2>
+            <Button size="sm" variant="secondary" onClick={() => setUploadOpen(true)}>
+              + Add
+            </Button>
+          </div>
+          <DocumentList documents={documents} onDelete={remove} />
+        </div>
       </div>
 
       {/* Settings section */}

@@ -12,14 +12,19 @@ interface AppPageProps {
 }
 
 export function AppPage({ user, onSignOut }: AppPageProps) {
-  const { messages, streaming, sendMessage, newSession } = useChat();
+  const { messages, streaming, sendMessage, newSession, sessions, activeSessionId, loadSession } = useChat();
 
   return (
     <div className="flex flex-col h-screen bg-white">
       <Header user={user} onSignOut={onSignOut} onNewChat={newSession} />
       <KeySetupBanner />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          onSelectSession={loadSession}
+          onNewChat={newSession}
+        />
         <main className="flex flex-col flex-1 overflow-hidden">
           <ChatWindow messages={messages} streaming={streaming} />
           <ChatInput onSend={sendMessage} disabled={streaming} />
