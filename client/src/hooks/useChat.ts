@@ -8,6 +8,14 @@ function makeId() {
   return crypto.randomUUID();
 }
 
+function summarizeTitle(text: string): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= 45) return clean;
+  const cut = clean.slice(0, 45);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 20 ? cut.slice(0, lastSpace) : cut) + "…";
+}
+
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [streaming, setStreaming] = useState(false);
@@ -61,7 +69,7 @@ export function useChat() {
 
     const { data } = await supabase
       .from("chat_sessions")
-      .insert({ user_id: userId, title: "Chat " + new Date().toLocaleDateString() })
+      .insert({ user_id: userId, title: "New Chat" })
       .select("id, title, created_at")
       .single();
 
@@ -111,7 +119,14 @@ export function useChat() {
       const userId = sessionData.session?.user.id;
       if (!token || !userId) return;
 
+      const wasNewSession = sessionIdRef.current === null;
       const sid = await getOrCreateSession(userId);
+
+      if (wasNewSession) {
+        const title = summarizeTitle(question);
+        supabase.from("chat_sessions").update({ title }).eq("id", sid);
+        setSessions((prev) => prev.map((s) => (s.id === sid ? { ...s, title } : s)));
+      }
 
       const userMsg: Message = {
         id: makeId(),

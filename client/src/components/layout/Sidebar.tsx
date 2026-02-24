@@ -14,15 +14,6 @@ interface SidebarProps {
   onNewChat: () => void;
 }
 
-function formatSessionDate(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
 
 export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat }: SidebarProps) {
   const { documents, remove } = useDocuments();
@@ -74,9 +65,6 @@ export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat 
                       }`}
                     >
                       <span className="block truncate">{s.title}</span>
-                      <span className="block text-xs text-gray-400 mt-0.5">
-                        {formatSessionDate(s.created_at)}
-                      </span>
                     </button>
                   </li>
                 );
