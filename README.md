@@ -1,10 +1,21 @@
-# ⚡ RAGnarok
+# RAGnarok
 
 > A production-ready, zero-cost, multi-user RAG (Retrieval-Augmented Generation) app.
 
 **Stack:** React 18 + Vite + Tailwind · FastAPI + sentence-transformers · Supabase (pgvector + Auth + RLS) · Groq API (BYOK)
 
 **Deploy targets:** GitHub Pages (frontend) · HuggingFace Spaces Docker (backend)
+
+---
+
+## Features
+
+- Upload PDFs — chunked, embedded, and stored per user
+- Chat with your documents — streamed answers with source citations
+- Persistent chat history — sessions saved to Supabase, auto-titled from first message
+- Chat session sidebar — browse and resume past conversations
+- Full user isolation — RLS ensures no cross-user data leakage
+- BYOK Groq key — kept in memory only, never persisted or sent to storage
 
 ---
 
@@ -72,7 +83,7 @@ Supabase
 
 3. Go to **Settings → Pages** → Source: **GitHub Actions**
 4. Push to `main` → GitHub Actions builds and deploys automatically
-5. App is live at `https://yourusername.github.io/RAGnarok/`
+5. App is live at `https://yourusername.github.io/RAG/`
 
 ### 4. Groq API Key
 
@@ -100,7 +111,7 @@ cd client
 npm install
 cp .env.example .env.local   # fill in your values (point API to localhost:8000)
 npm run dev
-# → http://localhost:5173/RAGnarok/
+# → http://localhost:5173/RAG/
 ```
 
 ---
@@ -119,8 +130,9 @@ npm run dev
 
 - [ ] SQL migrations applied — tables + `match_documents` function exist in Supabase
 - [ ] `GET /health` returns `{"status":"ok"}`
-- [ ] Sign up a user, set Groq key, upload a PDF, ask a question → streamed answer
-- [ ] Sign up a second user — they see zero documents (RLS isolation confirmed)
+- [ ] Sign up a user, set Groq key, upload a PDF, ask a question → streamed answer with source citations
+- [ ] Chat session appears in sidebar, titled from first message
+- [ ] Sign up a second user — they see zero documents and zero chat history (RLS isolation confirmed)
 - [ ] Push to `main` → GitHub Actions deploys to gh-pages
 
 ---
