@@ -19,8 +19,8 @@ export function ChatWindow({ messages, streaming }: ChatWindowProps) {
       <div className="flex-1 flex items-center justify-center text-center px-8">
         <div>
           <p className="text-5xl mb-4">⚡</p>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">RAGnarok</h2>
-          <p className="text-gray-500 text-sm max-w-sm">
+          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">RAGnarok</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm max-w-sm">
             Upload documents in the sidebar, then ask questions to get AI-powered answers grounded
             in your knowledge base.
           </p>

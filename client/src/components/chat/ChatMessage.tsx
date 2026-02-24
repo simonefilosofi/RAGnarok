@@ -20,7 +20,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           "max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
           isUser
             ? "bg-brand-600 text-white rounded-br-sm"
-            : "bg-gray-100 text-gray-900 rounded-bl-sm",
+            : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm",
         ].join(" ")}
       >
         {isUser ? (

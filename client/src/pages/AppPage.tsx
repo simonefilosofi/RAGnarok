@@ -19,7 +19,7 @@ export function AppPage({ user, onSignOut }: AppPageProps) {
   const [keyModalOpen, setKeyModalOpen] = useState(!groqKey);
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-white dark:bg-gray-900">
       <Header user={user} onSignOut={onSignOut} onNewChat={newSession} />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar

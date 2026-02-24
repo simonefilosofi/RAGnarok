@@ -39,11 +39,11 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3">
+    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
       {!groqKey && (
         <p className="text-xs text-amber-600 mb-2">Set your Groq API key above to enable chat.</p>
       )}
-      <div className="flex items-end gap-2 rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+      <div className="flex items-end gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-2 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
         <textarea
           ref={textareaRef}
           value={value}
@@ -52,7 +52,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           placeholder={groqKey ? "Ask a question… (Enter to send, Shift+Enter for newline)" : "Set Groq key to chat"}
           disabled={disabled || !groqKey}
           rows={1}
-          className="flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none max-h-40 disabled:opacity-50"
+          className="flex-1 resize-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none max-h-40 disabled:opacity-50"
         />
         <button
           onClick={handleSend}
@@ -65,7 +65,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           </svg>
         </button>
       </div>
-      <p className="text-xs text-gray-400 mt-1.5 text-center">
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 text-center">
         AI answers are grounded in your uploaded documents only.
       </p>
     </div>
