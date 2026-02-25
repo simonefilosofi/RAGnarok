@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { useState } from "react";
+import { useSessionStore } from "../../store/sessionStore";
 import { SettingsModal } from "../ui/SettingsModal";
 
 type View = "chat" | "documents";
@@ -29,6 +30,7 @@ function HammerIcon({ className }: { className?: string }) {
 
 export function Header({ user, onSignOut, view, onViewChange }: HeaderProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const groqKey = useSessionStore((s) => s.groqKey);
 
   return (
     <>
@@ -69,6 +71,14 @@ export function Header({ user, onSignOut, view, onViewChange }: HeaderProps) {
           <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
             {user.email}
           </span>
+          <span
+            title={groqKey ? "Groq API key active" : "No Groq API key set"}
+            className={`w-2 h-2 rounded-full transition-colors ${
+              groqKey
+                ? "bg-green-400 shadow-[0_0_6px_1px_rgba(74,222,128,0.7)]"
+                : "bg-gray-500 dark:bg-gray-600"
+            }`}
+          />
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
