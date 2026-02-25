@@ -5,11 +5,29 @@ from .llm import stream_completion
 from .reranker import rerank_chunks
 from .vector_store import get_supabase_client, match_documents_rpc
 
-SYSTEM_PROMPT = (
-    "You are a helpful AI assistant. Answer the user's question using ONLY the provided "
-    "context sources. If the answer is not in the sources, say so clearly. "
-    "Cite sources by their number, e.g. [Source 1]."
-)
+def _citation_label(metadata: dict) -> str:
+    """Build a human-readable citation label from chunk metadata."""
+    source = metadata.get("source", "Unknown")
+    page = metadata.get("page")
+    if page is not None:
+        return f"{source}, p.{page}"
+    return source
+
+
+SYSTEM_PROMPT = """\
+You are a precise document assistant. Answer questions based strictly on the provided source excerpts.
+
+Guidelines:
+- Use ONLY information present in the sources. Never invent or infer facts not explicitly stated.
+- Cite inline immediately after each claim using the file name and page, e.g. "The deadline is 31 December [report.pdf, p.4]."
+- For web sources, cite the URL instead: "According to the policy [https://example.com]."
+- If multiple sources support a claim, cite all of them: [report.pdf, p.4][contract.pdf, p.12].
+- If the answer is partially covered, answer what the sources support and clearly state what is missing.
+- If the answer is not in the sources at all, respond: "I couldn't find this in your documents." Do not guess.
+- When sources conflict, prefer those with a higher relevance score.
+- Be concise and direct. Skip preamble like "Based on the context..." — just answer.
+- Use markdown (bold, bullet points) only when it genuinely improves clarity.\
+"""
 
 
 async def rag_stream(
@@ -48,8 +66,8 @@ async def rag_stream(
     # Step 4 — build prompt
     if chunks:
         context_parts = [
-            f"[Source {i + 1}] (relevance: {c['reranker_score']:.2f})\n{c['content']}"
-            for i, c in enumerate(chunks)
+            f"[{_citation_label(c['metadata'])}] (relevance: {c['reranker_score']:.2f})\n{c['content']}"
+            for c in chunks
         ]
         context_block = "\n\n---\n\n".join(context_parts)
         user_message = f"Context:\n{context_block}\n\nQuestion: {question}"

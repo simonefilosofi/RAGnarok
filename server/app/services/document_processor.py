@@ -32,16 +32,18 @@ def _split_text(text: str, base_metadata: dict) -> list[TextChunk]:
 
 
 async def process_pdf(file_bytes: bytes, filename: str) -> list[TextChunk]:
-    """Extract text from a PDF and split into chunks."""
+    """Extract text from a PDF and split into chunks, preserving page numbers."""
     reader = PdfReader(io.BytesIO(file_bytes))
-    pages_text: list[str] = []
+    chunks: list[TextChunk] = []
     for page_num, page in enumerate(reader.pages):
         text = page.extract_text() or ""
         if text.strip():
-            pages_text.append(text)
-
-    full_text = "\n\n".join(pages_text)
-    return _split_text(full_text, {"source": filename, "source_type": "pdf"})
+            page_chunks = _split_text(
+                text,
+                {"source": filename, "source_type": "pdf", "page": page_num + 1},
+            )
+            chunks.extend(page_chunks)
+    return chunks
 
 
 async def process_url(url: str) -> list[TextChunk]:
