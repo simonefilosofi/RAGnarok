@@ -24,7 +24,7 @@ export function AppPage({ user, onSignOut }: AppPageProps) {
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-gray-900">
-      <Header user={user} onSignOut={onSignOut} onNewChat={newSession} view={view} onViewChange={setView} />
+      <Header user={user} onSignOut={onSignOut} view={view} onViewChange={setView} />
       <div className="flex flex-1 overflow-hidden">
         {view === "chat" && (
           <Sidebar

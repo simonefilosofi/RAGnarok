@@ -1,6 +1,5 @@
 import type { User } from "@supabase/supabase-js";
 import { useState } from "react";
-import { Button } from "../ui/Button";
 import { SettingsModal } from "../ui/SettingsModal";
 
 type View = "chat" | "documents";
@@ -8,7 +7,6 @@ type View = "chat" | "documents";
 interface HeaderProps {
   user: User;
   onSignOut: () => void;
-  onNewChat: () => void;
   view: View;
   onViewChange: (v: View) => void;
 }
@@ -29,7 +27,7 @@ function HammerIcon({ className }: { className?: string }) {
   );
 }
 
-export function Header({ user, onSignOut, onNewChat, view, onViewChange }: HeaderProps) {
+export function Header({ user, onSignOut, view, onViewChange }: HeaderProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
@@ -37,11 +35,6 @@ export function Header({ user, onSignOut, onNewChat, view, onViewChange }: Heade
       <header className="h-14 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-3">
           <span className="text-xl font-bold text-brand-600">⚡ RAGnarok</span>
-          {view === "chat" && (
-            <Button variant="ghost" size="sm" onClick={onNewChat}>
-              + New Chat
-            </Button>
-          )}
         </div>
 
         {/* Centered view switcher */}

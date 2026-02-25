@@ -39,9 +39,13 @@ export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat,
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
               Chats
             </h2>
-            <Button size="sm" variant="secondary" onClick={onNewChat}>
-              + New
-            </Button>
+            <button
+              type="button"
+              onClick={onNewChat}
+              className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              + new chat
+            </button>
           </div>
           {sessions.length === 0 ? (
             <p className="text-xs text-gray-400 dark:text-gray-500 py-2">No conversations yet.</p>
