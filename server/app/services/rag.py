@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 
 from .embeddings import embed_query
 from .llm import stream_completion
-from .reranker import rerank_chunks
+from .reranker import deduplicate_chunks, rerank_chunks
 from .vector_store import get_supabase_client, match_documents_rpc
 
 def _citation_label(metadata: dict) -> str:
@@ -62,6 +62,10 @@ async def rag_stream(
     # Step 3 — rerank: cross-encoder scores every (question, chunk) pair and
     # returns the top match_count chunks sorted by relevance score descending.
     chunks = rerank_chunks(question, candidates, top_n=match_count)
+
+    # Step 3b — deduplicate: drop near-identical chunks so the LLM receives
+    # diverse context rather than slight variations of the same passage.
+    chunks = deduplicate_chunks(chunks)
 
     # Step 4 — build prompt
     if chunks:

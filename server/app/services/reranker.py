@@ -51,3 +51,38 @@ def rerank_chunks(question: str, chunks: list[dict], top_n: int = 5) -> list[dic
     # Sort descending by cross-encoder score and return top_n
     ranked = sorted(chunks, key=lambda c: c["reranker_score"], reverse=True)
     return ranked[:top_n]
+
+
+def deduplicate_chunks(chunks: list[dict], threshold: float = 0.72) -> list[dict]:
+    """
+    Remove near-duplicate chunks using Jaccard similarity on word sets.
+
+    Chunks must be sorted best-first (reranker score descending). Each chunk is
+    kept only if its word overlap with every already-kept chunk is below the
+    threshold, ensuring the LLM receives diverse context rather than slight
+    variations of the same passage.
+
+    Args:
+        chunks:     Chunk dicts sorted by relevance descending.
+        threshold:  Jaccard similarity above which a chunk is considered a
+                    duplicate and dropped (0.72 = 72% word overlap).
+
+    Returns:
+        Deduplicated list preserving the original order.
+    """
+    kept: list[dict] = []
+    kept_word_sets: list[set[str]] = []
+
+    for chunk in chunks:
+        words = set(chunk["content"].lower().split())
+        union_sizes = [len(words | s) for s in kept_word_sets]
+        is_duplicate = any(
+            len(words & s) / u >= threshold
+            for s, u in zip(kept_word_sets, union_sizes)
+            if u > 0
+        )
+        if not is_duplicate:
+            kept.append(chunk)
+            kept_word_sets.append(words)
+
+    return kept
