@@ -1,19 +1,33 @@
 import io
 from dataclasses import dataclass
+from functools import lru_cache
 
 import httpx
 from bs4 import BeautifulSoup
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
+from transformers import AutoTokenizer
 
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
+# BGE-small-en-v1.5 has a 512-token max sequence length.
+# 300 tokens per chunk leaves headroom for the query prefix used at retrieval
+# time and keeps each chunk semantically focused. 50-token overlap preserves
+# sentence continuity across boundaries without excessive redundancy.
+CHUNK_SIZE = 300     # tokens
+CHUNK_OVERLAP = 50   # tokens
 
-_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=CHUNK_SIZE,
-    chunk_overlap=CHUNK_OVERLAP,
-    separators=["\n\n", "\n", " ", ""],
-)
+# Must match the embedding model so token counts are accurate.
+_TOKENIZER_NAME = "BAAI/bge-small-en-v1.5"
+
+
+@lru_cache(maxsize=1)
+def _get_splitter() -> RecursiveCharacterTextSplitter:
+    tokenizer = AutoTokenizer.from_pretrained(_TOKENIZER_NAME)
+    return RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
+        tokenizer,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+        separators=["\n\n", "\n", " ", ""],
+    )
 
 
 @dataclass
@@ -23,7 +37,7 @@ class TextChunk:
 
 
 def _split_text(text: str, base_metadata: dict) -> list[TextChunk]:
-    raw_chunks = _splitter.split_text(text)
+    raw_chunks = _get_splitter().split_text(text)
     return [
         TextChunk(content=chunk, metadata={**base_metadata, "chunk_index": i})
         for i, chunk in enumerate(raw_chunks)
