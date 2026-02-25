@@ -38,7 +38,7 @@ export function AppPage({ user, onSignOut }: AppPageProps) {
         <main className="flex flex-col flex-1 overflow-hidden">
           {view === "chat" ? (
             <>
-              <ChatWindow messages={messages} streaming={streaming} />
+              <ChatWindow messages={messages} streaming={streaming} onSuggestion={sendMessage} />
               <ChatInput onSend={sendMessage} disabled={streaming} />
             </>
           ) : (
