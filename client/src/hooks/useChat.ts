@@ -124,7 +124,7 @@ export function useChat() {
 
       if (wasNewSession) {
         const title = summarizeTitle(question);
-        supabase.from("chat_sessions").update({ title }).eq("id", sid);
+        await supabase.from("chat_sessions").update({ title }).eq("id", sid);
         setSessions((prev) => prev.map((s) => (s.id === sid ? { ...s, title } : s)));
       }
 
