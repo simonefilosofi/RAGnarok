@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface SessionState {
   groqKey: string;
@@ -6,12 +7,13 @@ interface SessionState {
   clearGroqKey: () => void;
 }
 
-/**
- * In-memory only — no persist middleware.
- * The Groq key is cleared when the page is closed.
- */
-export const useSessionStore = create<SessionState>((set) => ({
-  groqKey: "",
-  setGroqKey: (key) => set({ groqKey: key }),
-  clearGroqKey: () => set({ groqKey: "" }),
-}));
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set) => ({
+      groqKey: "",
+      setGroqKey: (key) => set({ groqKey: key }),
+      clearGroqKey: () => set({ groqKey: "" }),
+    }),
+    { name: "ragnarok-session" }
+  )
+);
