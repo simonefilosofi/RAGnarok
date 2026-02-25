@@ -2,7 +2,7 @@
 title: RAGnarok-2
 emoji: ⚡
 colorFrom: red
-colorTo: orange
+colorTo: yellow
 sdk: docker
 pinned: false
 ---
