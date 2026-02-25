@@ -1,8 +1,4 @@
-import { useState } from "react";
-import { useSessionStore } from "../../store/sessionStore";
 import type { ChatSession } from "../../types";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
 
 interface SidebarProps {
   sessions: ChatSession[];
@@ -12,24 +8,7 @@ interface SidebarProps {
   onDeleteSession: (id: string) => void;
 }
 
-
 export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat, onDeleteSession }: SidebarProps) {
-  const { groqKey, setGroqKey, clearGroqKey } = useSessionStore();
-  const [keyInput, setKeyInput] = useState(groqKey);
-  const [keyError, setKeyError] = useState("");
-  const [showKey, setShowKey] = useState(false);
-
-  const handleSaveKey = () => {
-    const trimmed = keyInput.trim();
-    if (trimmed && !/^gsk_[a-zA-Z0-9]{50,}$/.test(trimmed)) {
-      setKeyError("Must start with gsk_ followed by 50+ alphanumeric characters");
-      return;
-    }
-    setKeyError("");
-    if (trimmed) setGroqKey(trimmed);
-    else clearGroqKey();
-  };
-
   return (
     <aside className="w-72 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col h-full shrink-0">
       <div className="flex-1 overflow-y-auto">
@@ -80,43 +59,7 @@ export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat,
             </ul>
           )}
         </div>
-
       </div>
-
-      {/* Settings section */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-          Groq API Key
-        </h3>
-        <div className="flex flex-col gap-2">
-          <div className="relative">
-            <Input
-              type={showKey ? "text" : "password"}
-              value={keyInput}
-              onChange={(e) => {
-                setKeyInput(e.target.value);
-                setKeyError("");
-              }}
-              placeholder="gsk_..."
-              error={keyError}
-            />
-            <button
-              type="button"
-              onClick={() => setShowKey((s) => !s)}
-              className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 text-xs"
-            >
-              {showKey ? "Hide" : "Show"}
-            </button>
-          </div>
-          <Button size="sm" onClick={handleSaveKey} className="w-full">
-            {groqKey ? "Update Key" : "Save Key"}
-          </Button>
-          {groqKey && (
-            <p className="text-xs text-green-600 text-center">✓ Key set (in-memory only)</p>
-          )}
-        </div>
-      </div>
-
     </aside>
   );
 }
