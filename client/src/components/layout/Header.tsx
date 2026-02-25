@@ -3,10 +3,14 @@ import { useState } from "react";
 import { Button } from "../ui/Button";
 import { SettingsModal } from "../ui/SettingsModal";
 
+type View = "chat" | "documents";
+
 interface HeaderProps {
   user: User;
   onSignOut: () => void;
   onNewChat: () => void;
+  view: View;
+  onViewChange: (v: View) => void;
 }
 
 function HammerIcon({ className }: { className?: string }) {
@@ -25,18 +29,49 @@ function HammerIcon({ className }: { className?: string }) {
   );
 }
 
-export function Header({ user, onSignOut, onNewChat }: HeaderProps) {
+export function Header({ user, onSignOut, onNewChat, view, onViewChange }: HeaderProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <>
-      <header className="h-14 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center justify-between px-4 shrink-0">
+      <header className="h-14 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-3">
           <span className="text-xl font-bold text-brand-600">⚡ RAGnarok</span>
-          <Button variant="ghost" size="sm" onClick={onNewChat}>
-            + New Chat
-          </Button>
+          {view === "chat" && (
+            <Button variant="ghost" size="sm" onClick={onNewChat}>
+              + New Chat
+            </Button>
+          )}
         </div>
+
+        {/* Centered view switcher */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+            <button
+              type="button"
+              onClick={() => onViewChange("chat")}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                view === "chat"
+                  ? "bg-amber-500 text-white shadow-sm"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              }`}
+            >
+              <span>💬</span> Chat
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewChange("documents")}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                view === "documents"
+                  ? "bg-amber-500 text-white shadow-sm"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              }`}
+            >
+              <span>📄</span> Documents
+            </button>
+          </div>
+        </div>
+
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
             {user.email}

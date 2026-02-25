@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { useDocuments } from "../../hooks/useDocuments";
 import { useSessionStore } from "../../store/sessionStore";
 import type { ChatSession } from "../../types";
-import { DocumentList } from "../documents/DocumentList";
-import { UploadModal } from "../documents/UploadModal";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 
@@ -17,9 +14,7 @@ interface SidebarProps {
 
 
 export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat, onDeleteSession }: SidebarProps) {
-  const { documents, remove } = useDocuments();
   const { groqKey, setGroqKey, clearGroqKey } = useSessionStore();
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [keyInput, setKeyInput] = useState(groqKey);
   const [keyError, setKeyError] = useState("");
   const [showKey, setShowKey] = useState(false);
@@ -82,21 +77,6 @@ export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat,
           )}
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-200 dark:border-gray-700 mx-4 my-1" />
-
-        {/* Documents section */}
-        <div className="p-4 pt-3">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-              Documents
-            </h2>
-            <Button size="sm" variant="secondary" onClick={() => setUploadOpen(true)}>
-              + Add
-            </Button>
-          </div>
-          <DocumentList documents={documents} onDelete={remove} />
-        </div>
       </div>
 
       {/* Settings section */}
@@ -133,7 +113,6 @@ export function Sidebar({ sessions, activeSessionId, onSelectSession, onNewChat,
         </div>
       </div>
 
-      <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
     </aside>
   );
 }
