@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 
-from .embeddings import embed_text
+from .embeddings import embed_query
 from .llm import stream_completion
 from .reranker import rerank_chunks
 from .vector_store import get_supabase_client, match_documents_rpc
@@ -28,7 +28,7 @@ async def rag_stream(
     5. Stream Groq response back to the caller
     """
     # Step 1 — embed query with the bi-encoder
-    query_embedding = embed_text(question)
+    query_embedding = embed_query(question)
 
     # Step 2 — vector search: retrieve 2× candidates so the reranker has more
     # material to work with. Lowering the threshold slightly compensates for the
