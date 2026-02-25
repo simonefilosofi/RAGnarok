@@ -4,10 +4,10 @@ import { ChatMessage } from "./ChatMessage";
 
 interface ChatWindowProps {
   messages: Message[];
-  streaming: boolean;
+  streaming?: boolean;
 }
 
-export function ChatWindow({ messages, streaming }: ChatWindowProps) {
+export function ChatWindow({ messages }: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,16 +34,6 @@ export function ChatWindow({ messages, streaming }: ChatWindowProps) {
       {messages.map((msg) => (
         <ChatMessage key={msg.id} message={msg} />
       ))}
-      {streaming && (
-        <div className="flex justify-start mb-4">
-          <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold mr-3 shrink-0">
-            AI
-          </div>
-          <div className="bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3">
-            <span className="inline-block w-1.5 h-4 bg-gray-500 rounded animate-pulse" />
-          </div>
-        </div>
-      )}
       <div ref={bottomRef} />
     </div>
   );
