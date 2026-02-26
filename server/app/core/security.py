@@ -2,6 +2,7 @@ import logging
 import re
 
 import jwt
+from jwt import PyJWKClient
 from fastapi import Header, HTTPException, status
 
 from .config import settings
@@ -9,14 +10,17 @@ from .config import settings
 logger = logging.getLogger(__name__)
 _GROQ_KEY_RE = re.compile(r"^gsk_[a-zA-Z0-9]{50,}$")
 
+_jwks_client = PyJWKClient(f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json")
+
 
 def verify_jwt(token: str) -> dict:
-    """Decode and validate a Supabase JWT. Raises 401 on failure."""
+    """Decode and validate a Supabase JWT via JWKS. Raises 401 on failure."""
     try:
+        signing_key = _jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
+            signing_key.key,
+            algorithms=["ES256", "RS256", "HS256"],
             audience="authenticated",
         )
         return payload
