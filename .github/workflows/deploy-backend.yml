@@ -1,0 +1,28 @@
+name: Deploy Backend to HuggingFace Spaces
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push server/ to HuggingFace Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git subtree split --prefix=server -b hf-deploy
+          git push https://Filosofii:$HF_TOKEN@huggingface.co/spaces/Filosofii/RAGnarok-2 hf-deploy:main --force
+          git branch -D hf-deploy
