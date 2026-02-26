@@ -1,3 +1,4 @@
+import logging
 import re
 
 import jwt
@@ -5,6 +6,7 @@ from fastapi import Header, HTTPException, status
 
 from .config import settings
 
+logger = logging.getLogger(__name__)
 _GROQ_KEY_RE = re.compile(r"^gsk_[a-zA-Z0-9]{50,}$")
 
 
@@ -19,6 +21,7 @@ def verify_jwt(token: str) -> dict:
         )
         return payload
     except jwt.PyJWTError as exc:
+        logger.error("JWT verification failed: %s: %s", type(exc).__name__, exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
