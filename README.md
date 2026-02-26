@@ -27,17 +27,31 @@ Browser → GitHub Pages (React SPA)
             │  X-LLM-Key: gsk_...   (never persisted)
             ▼
 HuggingFace Spaces (FastAPI, port 7860)
-  ├─ Verify JWT (SUPABASE_JWT_SECRET)
-  ├─ Embed query (all-MiniLM-L6-v2, 384-dim)
+  ├─ Verify JWT via JWKS (ES256/RS256/HS256, survives key rotations)
+  ├─ Embed query (BAAI/bge-small-en-v1.5, 384-dim)
+  ├─ Cross-encoder reranker (ms-marco-MiniLM-L-6-v2)
   ├─ RPC match_documents → Supabase (pgvector HNSW, RLS active)
   └─ Stream Groq llama-3.1-8b-instant → SSE → Browser
 
 Supabase
-  ├─ Auth (email/password, JWT)
+  ├─ Auth (email/password, JWT — currently ECC P-256 / ES256)
   ├─ documents, document_chunks, chat_sessions, chat_messages
   ├─ pgvector HNSW index (m=16, ef_construction=64)
   └─ RLS: auth.uid() = user_id on every table
 ```
+
+---
+
+## CI/CD
+
+| Workflow | Trigger | Target |
+|---|---|---|
+| `deploy.yml` | Push to `main` | GitHub Pages (frontend) |
+| `deploy-backend.yml` | Push to `main` with changes in `server/` | HuggingFace Spaces (backend) |
+
+Both workflows run automatically. You can also trigger `deploy-backend.yml` manually from **GitHub → Actions → Deploy Backend to HuggingFace Spaces → Run workflow**.
+
+> **Note:** The backend workflow uses `git subtree split` to push only the `server/` directory to the HF Space repository. It requires a `HF_TOKEN` GitHub Actions secret (HuggingFace write token for the Space).
 
 ---
 
@@ -52,23 +66,23 @@ Supabase
 3. Collect these values from **Settings → API**:
    - `Project URL` → `SUPABASE_URL`
    - `anon public` key → `SUPABASE_ANON_KEY`
-   - `JWT Secret` (Settings → API → JWT Settings) → `SUPABASE_JWT_SECRET`
+
+> **JWT verification** uses the JWKS endpoint (`{SUPABASE_URL}/auth/v1/.well-known/jwks.json`) and supports any algorithm Supabase uses (ES256, RS256, HS256). No JWT secret needed in the backend — it handles key rotations automatically.
 
 ### 2. Backend — HuggingFace Spaces
 
 1. Create a new Space: **Docker** runtime, **CPU** hardware (free tier)
-2. Push the `server/` directory contents to the Space repository
-3. Set the following **Repository Secrets** (Settings → Repository secrets):
+2. Set the following **Repository Secrets** (Settings → Repository secrets):
 
    | Secret | Value |
    |---|---|
    | `SUPABASE_URL` | Your Supabase project URL |
    | `SUPABASE_ANON_KEY` | Your Supabase anon key |
-   | `SUPABASE_JWT_SECRET` | Your Supabase JWT secret |
+   | `SUPABASE_JWT_SECRET` | Your Supabase JWT secret (legacy, kept for config) |
    | `ALLOWED_ORIGINS` | `https://yourusername.github.io` |
 
-4. The Space will build and expose the API at `https://yourusername-ragnarok.hf.space`
-5. Verify: `GET https://yourusername-ragnarok.hf.space/health` → `{"status":"ok"}`
+3. The Space will build and expose the API at `https://yourusername-spacename.hf.space`
+4. Verify: `GET https://yourusername-spacename.hf.space/health` → `{"status":"ok"}`
 
 ### 3. Frontend — GitHub Pages
 
@@ -80,10 +94,13 @@ Supabase
    | `VITE_SUPABASE_URL` | Your Supabase project URL |
    | `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
    | `VITE_API_BASE_URL` | Your HuggingFace Space URL |
+   | `HF_TOKEN` | HuggingFace write token for your Space |
 
 3. Go to **Settings → Pages** → Source: **GitHub Actions**
-4. Push to `main` → GitHub Actions builds and deploys automatically
+4. Push to `main` → both frontend and backend deploy automatically
 5. App is live at `https://yourusername.github.io/RAG/`
+
+> **HuggingFace token**: generate it at [hf.co/settings/tokens](https://huggingface.co/settings/tokens) → New token → Fine-grained → select your Space → Write permission.
 
 ### 4. Groq API Key
 
@@ -120,7 +137,7 @@ npm run dev
 
 - **RLS everywhere**: `auth.uid() = user_id` on all four tables — users are completely isolated
 - `match_documents()` uses `SECURITY INVOKER` so RLS applies inside the function
-- Backend verifies every JWT with `SUPABASE_JWT_SECRET` before any DB access
+- Backend verifies every JWT via **JWKS** (`PyJWT[crypto]`), supporting ES256/RS256/HS256 — survives Supabase key rotations without any code changes
 - Frontend uses the **anon key only**; service role key never leaves backend `.env`
 - Groq key: Zustand **in-memory store** (no `persist` middleware), validated by regex `^gsk_[a-zA-Z0-9]{50,}$`, used ephemerally, never stored
 
@@ -133,7 +150,7 @@ npm run dev
 - [ ] Sign up a user, set Groq key, upload a PDF, ask a question → streamed answer with source citations
 - [ ] Chat session appears in sidebar, titled from first message
 - [ ] Sign up a second user — they see zero documents and zero chat history (RLS isolation confirmed)
-- [ ] Push to `main` → GitHub Actions deploys to gh-pages
+- [ ] Push to `main` with a `server/` change → GitHub Actions deploys backend to HF Spaces automatically
 
 ---
 
