@@ -56,6 +56,7 @@ export async function ingestUrl(
 
 export async function* streamChat(
   question: string,
+  history: Array<{ role: string; content: string }>,
   token: string,
   groqKey: string
 ): AsyncGenerator<string> {
@@ -66,7 +67,7 @@ export async function* streamChat(
       "X-LLM-Key": groqKey,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, history }),
   });
 
   if (!response.ok || !response.body) {

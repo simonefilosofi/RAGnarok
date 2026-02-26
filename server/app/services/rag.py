@@ -34,19 +34,27 @@ async def rag_stream(
     user_jwt: str,
     groq_key: str,
     question: str,
+    history: list[dict] | None = None,
     match_count: int = 5,
     match_threshold: float = 0.5,
 ) -> AsyncGenerator[str, None]:
     """
     Full RAG pipeline:
-    1. Embed the question
+    1. Embed the question (contextualized with last user turn if available)
     2. Retrieve 2x candidate chunks via vector search (wide net)
     3. Rerank candidates with a cross-encoder, keep top match_count
-    4. Build prompt with sources
+    4. Build prompt with sources and conversation history
     5. Stream Groq response back to the caller
     """
-    # Step 1 — embed query with the bi-encoder
-    query_embedding = embed_query(question)
+    history = history or []
+
+    # Step 1 — embed query, prepending the last user message for better
+    # follow-up retrieval (e.g. "Who signed it?" → context-aware embedding)
+    last_user_msg = next(
+        (m["content"] for m in reversed(history) if m["role"] == "user"), None
+    )
+    search_query = f"{last_user_msg}\n{question}" if last_user_msg else question
+    query_embedding = embed_query(search_query)
 
     # Step 2 — vector search: retrieve 2× candidates so the reranker has more
     # material to work with. Lowering the threshold slightly compensates for the
@@ -82,6 +90,7 @@ async def rag_stream(
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
+        *history,
         {"role": "user", "content": user_message},
     ]
 

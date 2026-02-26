@@ -119,6 +119,12 @@ export function useChat() {
       const userId = sessionData.session?.user.id;
       if (!token || !userId) return;
 
+      // Capture the last 6 messages (3 turns) before adding new ones
+      const history = messages
+        .filter((m) => m.content)
+        .slice(-6)
+        .map((m) => ({ role: m.role, content: m.content }));
+
       const wasNewSession = sessionIdRef.current === null;
       const sid = await getOrCreateSession(userId);
 
@@ -156,7 +162,7 @@ export function useChat() {
 
       let fullResponse = "";
       try {
-        for await (const chunk of streamChat(question, token, groqKey)) {
+        for await (const chunk of streamChat(question, history, token, groqKey)) {
           fullResponse += chunk;
           setMessages((prev) =>
             prev.map((m) =>
