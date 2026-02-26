@@ -98,7 +98,7 @@ Both workflows run automatically. You can also trigger `deploy-backend.yml` manu
 
 3. Go to **Settings → Pages** → Source: **GitHub Actions**
 4. Push to `main` → both frontend and backend deploy automatically
-5. App is live at `https://yourusername.github.io/RAG/`
+5. App is live at `https://yourusername.github.io/RAGnarok/`
 
 > **HuggingFace token**: generate it at [hf.co/settings/tokens](https://huggingface.co/settings/tokens) → New token → Fine-grained → select your Space → Write permission.
 
@@ -128,7 +128,7 @@ cd client
 npm install
 cp .env.example .env.local   # fill in your values (point API to localhost:8000)
 npm run dev
-# → http://localhost:5173/RAG/
+# → http://localhost:5173/RAGnarok/
 ```
 
 ---
