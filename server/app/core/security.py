@@ -1,7 +1,7 @@
 import re
 
+import jwt
 from fastapi import Header, HTTPException, status
-from jose import JWTError, jwt
 
 from .config import settings
 
@@ -18,7 +18,7 @@ def verify_jwt(token: str) -> dict:
             audience="authenticated",
         )
         return payload
-    except JWTError as exc:
+    except jwt.PyJWTError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
