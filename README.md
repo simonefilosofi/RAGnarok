@@ -7,6 +7,8 @@
 **Deploy targets:** GitHub Pages (frontend) · HuggingFace Spaces Docker (backend)
 
 ---
+## Hosted Version
+This application is hosted online for immediate use at this [link](https://simonefilosofi.github.io/RAGnarok/)
 
 ## Features
 
