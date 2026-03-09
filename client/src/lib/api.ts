@@ -8,10 +8,12 @@ interface UploadResult {
 export async function uploadDocument(
   file: File,
   token: string,
-  groqKey: string
+  groqKey: string,
+  title?: string
 ): Promise<UploadResult> {
   const formData = new FormData();
   formData.append("file", file);
+  if (title) formData.append("title", title);
 
   const response = await fetch(`${API_BASE}/documents/upload`, {
     method: "POST",

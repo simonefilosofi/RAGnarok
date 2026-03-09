@@ -41,14 +41,14 @@ export function useDocuments() {
   }, [fetchDocuments, documents]);
 
   const upload = useCallback(
-    async (file: File) => {
+    async (file: File, title?: string) => {
       setLoading(true);
       setError(null);
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
         if (!token) throw new Error("Not authenticated");
-        await uploadDocument(file, token, groqKey);
+        await uploadDocument(file, token, groqKey, title);
         await fetchDocuments();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");

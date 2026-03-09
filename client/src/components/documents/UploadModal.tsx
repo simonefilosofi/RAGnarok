@@ -18,6 +18,7 @@ export function UploadModal({ open, onClose }: UploadModalProps) {
   const [tab, setTab] = useState<Tab>("pdf");
   const [url, setUrl] = useState("");
   const [urlTitle, setUrlTitle] = useState("");
+  const [pdfTitle, setPdfTitle] = useState("");
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -27,7 +28,8 @@ export function UploadModal({ open, onClose }: UploadModalProps) {
     const file = fileRef.current?.files?.[0];
     if (!file) return;
     try {
-      await upload(file);
+      await upload(file, pdfTitle.trim() || file.name);
+      setPdfTitle("");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -85,6 +87,14 @@ export function UploadModal({ open, onClose }: UploadModalProps) {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
             />
           </div>
+          <Input
+            label="Custom name (optional)"
+            id="pdf-title"
+            type="text"
+            value={pdfTitle}
+            onChange={(e) => setPdfTitle(e.target.value)}
+            placeholder="e.g. File_A, Report_2024"
+          />
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={onClose} type="button">

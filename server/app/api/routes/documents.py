@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
 from ...core.security import get_user_id
@@ -36,6 +36,7 @@ async def _process_and_store(
 async def upload_document(
     background_tasks: BackgroundTasks,
     file: UploadFile,
+    title: str | None = Form(default=None),
     auth: tuple = Depends(get_user_id),
 ) -> dict:
     user_jwt, user_id = auth
@@ -46,13 +47,15 @@ async def upload_document(
     file_bytes = await file.read()
     client = get_supabase_client(user_jwt)
 
+    doc_title = title.strip() if title and title.strip() else (file.filename or "Untitled")
+
     # Insert document row immediately with status=processing
     result = (
         client.table("documents")
         .insert(
             {
                 "user_id": user_id,
-                "title": file.filename or "Untitled",
+                "title": doc_title,
                 "source_type": "pdf",
                 "status": "processing",
             }
@@ -66,7 +69,7 @@ async def upload_document(
         document_id,
         user_id,
         user_jwt,
-        process_pdf(file_bytes, file.filename or "document.pdf"),
+        process_pdf(file_bytes, doc_title),
     )
 
     return {"document_id": document_id, "status": "processing"}
